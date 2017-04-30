@@ -21,7 +21,7 @@ class IndexAction extends Action {
         }else{
             $this->reponseMsg();
         }
-    }
+    }//index end
     public function reponseMsg(){
         //1.获取到微信推送过来post数据（xml格式）
         $postArr = $GLOBALS['HTTP_RAW_POST_DATA'];
@@ -56,6 +56,21 @@ class IndexAction extends Action {
 <Content><![CDATA[你好]]></Content>
 </xml>*/
             }
+            if(strtolower($postObj->Event)=='click'){
+                if(strtolower($postObj->EventKey)=='item1'){
+                    $content="sdfasdfsdf";
+                }
+                if(strtolower($postObj->EventKey)=='item2'){
+                    $content="sdfasdfsdf";
+                }
+                $indexModel=new IndexModel();
+                $indexModel->responseText($postObj,$content);
+            }
+            if(strtolower($postObj->Event)=='view'){
+                $content="sdfasdfsdf".$postObj->EventKey;
+                $indexModel=new IndexModel();
+                $indexModel->responseText($postObj,$content);
+            }
         }
 
         if(strtolower($postObj->MsgType) == 'text'){
@@ -77,9 +92,86 @@ class IndexAction extends Action {
             $indexModel=new IndexModel();
             $indexModel->responseText($postObj,$content);
         }
-
+    }//reponseMsg end
+    /**
+     * [http_curl description]
+     * @param  [type] $url  接口url
+     * @param  string $type 请求类型
+     * @param  string $res  返回数据类型
+     * @param  string $arr  post请求参数
+     * @return [type]       [description]
+     */
+    function http_curl($url,$type='get',$res='json',$arr=''){
+        $ch=curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        if($type=='post'){
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $arr);
+        }
+        $output=curl_exec($ch);
+        curl_close($ch);
+        if($res=='json'){
+            if(curl_errno($ch)){
+                return curl_error($ch);
+            }else{
+                return json_decode($output,true);
+            }
+        }
+    }
+    public function getWxAccessToken(){
+        if($_SESSION['access_token'] && $_SESSION['expire_time']>time()){
+            return $_SESSION['access_token'];
+        }else{
+            $appid='wx365ea7444c5c40af';
+            $appsecret='0a24a383974a9ee95733061a4984a268';
+            $url="https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=".$appid."&secret=".$appsecret;
+            $res=$this->http_curl($url,'get','json');
+            $access_token=$res['access_token'];
+            $_SESSION['access_token']=$access_token;
+            $_SESSION['expire_time']=time()+7000;
+            return $access_token;
+        }
 
     }
+    public function definedItem(){
+        header('content-type:text/html;charset=utf-8');
+        echo $access_token=$this->getWxAccessToken();
+        $url="https://api.weixin.qq.com/cgi-bin/menu/create?access_token=".$access_token;
+        $postArr=array(
+                'button'=>array(
+                    array(
+                        'name'=>urlencode('哈哈'),
+                        'type'=>'click',
+                        'key'=>'item1',
+                        ),
+                    array(
+                        'name'=>urlencode('haha'),
+                        'sub_button'=>array(
+                                array(
+                                    'name'=>urlencode('haha'),
+                                    'type'=>'click',
+                                    'key'=>'item2',
+                                    ),
+                                array(
+                                    'name'=>urlencode('haha'),
+                                    'type'=>'view',
+                                    'url'=>'http://www.jh2k15.online',
+                                    ),
+                            ),
+                        ),
+                    array(
+                        'name'=>urlencode('haha'),
+                        'type'=>'view',
+                        'url'=>'http://dede.jh2k15.online',
+                        ),
+                ),
+        );
+        echo "<hr/>";
+        echo $postJson=urldecode(json_encode($postArr));
+        $res=$this->http_curl($url,'post','json',$postJson);
+        echo "<hr/>";
+        var_dump($res);
+    }
 
-
-}
+}//class end
