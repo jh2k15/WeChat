@@ -58,10 +58,10 @@ class IndexAction extends Action {
             }
             if(strtolower($postObj->Event)=='click'){
                 if(strtolower($postObj->EventKey)=='item1'){
-                    $content="sdfasdfsdf";
+                    $content="哈哈";
                 }
                 if(strtolower($postObj->EventKey)=='item2'){
-                    $content="sdfasdfsdf";
+                    $content="呵呵";
                 }
                 $indexModel=new IndexModel();
                 $indexModel->responseText($postObj,$content);
@@ -134,6 +134,7 @@ class IndexAction extends Action {
         }
 
     }
+    //自定义菜单
     public function definedItem(){
         header('content-type:text/html;charset=utf-8');
         echo $access_token=$this->getWxAccessToken();
@@ -141,29 +142,29 @@ class IndexAction extends Action {
         $postArr=array(
                 'button'=>array(
                     array(
-                        'name'=>urlencode('哈哈'),
-                        'type'=>'click',
-                        'key'=>'item1',
+                        'name'=>urlencode('主页'),
+                        'type'=>'view',
+                        'url'=>'http://www.jh2k15.online',
                         ),
                     array(
-                        'name'=>urlencode('haha'),
+                        'name'=>urlencode('博客'),
+                        'type'=>'view',
+                        'url'=>'http://dede.jh2k15.online',
+                        ),
+                    array(
+                        'name'=>urlencode('其他'),
                         'sub_button'=>array(
                                 array(
-                                    'name'=>urlencode('haha'),
+                                    'name'=>urlencode('哈哈'),
+                                    'type'=>'click',
+                                    'key'=>'item1',
+                                    ),
+                                array(
+                                    'name'=>urlencode('呵呵'),
                                     'type'=>'click',
                                     'key'=>'item2',
                                     ),
-                                array(
-                                    'name'=>urlencode('haha'),
-                                    'type'=>'view',
-                                    'url'=>'http://www.jh2k15.online',
-                                    ),
                             ),
-                        ),
-                    array(
-                        'name'=>urlencode('haha'),
-                        'type'=>'view',
-                        'url'=>'http://dede.jh2k15.online',
                         ),
                 ),
         );
@@ -173,5 +174,137 @@ class IndexAction extends Action {
         echo "<hr/>";
         var_dump($res);
     }
+    //群发接口
+    function sendMsgAll(){
+        header('content-type:text/html;charset=utf-8');
+        echo $access_token=$this->getWxAccessToken();
+        $url="https://api.weixin.qq.com/cgi-bin/message/mass/preview?access_token=".$access_token;
+/*{
+   "touser":"OPENID",
+   "mpnews":{
+            "media_id":"123dsdajkasd231jhksad"
+             },
+   "msgtype":"mpnews"
+}*/
+        $array=array(
+                    'touser'=>'oClZGwEAnIE24Tu1cAco4_AAf8LA',
+                    'mpnews'=>array(
+                        'media_id'=>'123dsdajkasd231jhksad'
+                        ),
+                    'msgtype'=>'mpnews',
+                    );
+/*{
+"touser":"OPENID",
+"text":{
+       "content":"CONTENT"
+       },
+"msgtype":"text"
+}*/
+//单文本
+        /*$array=array(
+            'touser'=>'oClZGwEAnIE24Tu1cAco4_AAf8LA',
+            'text'=>array(
+                'content'=>urlencode('呵呵')
+                ),
+            'msgtype'=>'text',
+            );*/
+        echo "<hr/>";
+        $postJson=urldecode(json_encode($array));
+        var_dump($postJson);
+        echo "<hr/>";
+        $res=$this->http_curl($url,'post','json',$postJson);
+        var_dump($res);
+    }
+    function sendTemplateMsg(){
+        header('content-type:text/html;charset=utf-8');
+        echo $access_token=$this->getWxAccessToken();
+        $url="https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=".$access_token;
 
+/*{
+    "touser":"OPENID",
+    "template_id":"ngqIpbwh8bUfcSsECmogfXcV14J0tQlEpBO27izEYtY",
+    "url":"http://weixin.qq.com/download",
+    "miniprogram":{
+     "appid":"xiaochengxuappid12345",
+     "pagepath":"index?foo=bar"
+    },
+    "data":{
+           "first": {
+               "value":"恭喜你购买成功！",
+               "color":"#173177"
+           },
+           "keynote1":{
+               "value":"巧克力",
+               "color":"#173177"
+           },
+           "keynote2": {
+               "value":"39.8元",
+               "color":"#173177"
+           },
+           "keynote3": {
+               "value":"2014年9月22日",
+               "color":"#173177"
+           },
+           "remark":{
+               "value":"欢迎再次购买！",
+               "color":"#173177"
+           }
+    }
+}*/
+    $array=array(
+        "touser"=>"oClZGwEAnIE24Tu1cAco4_AAf8LA",
+        "template_id"=>"OaJ8vo0WH-KDakdRgDko2mtnpOHbD99iniVFNub5yXI",
+        "url"=>"http://www.jh2k15.online",
+        "data"=>array(
+                "name"=>array(
+                        "value"=>"jh",
+                        "color"=>"#173177"
+                    ),
+                "money"=>array(
+                        "value"=>"1000",
+                        "color"=>"#173177"
+                    ),
+                "date"=>array(
+                        "value"=>date('Y-m-d H:i:s'),
+                        "color"=>"#173177"
+                    ),
+            ),
+        );
+    $postJson=urldecode(json_encode($array));
+    $res=$this->http_curl($url,'post','json',$postJson);
+    var_dump($res);
+    }//sendTemplateMsg end
+    function getBaseInfo(){
+        $appid='wx365ea7444c5c40af';
+        $redirect_uri=urlencode('http://www.jh2k15.online/wechat.php/Index/getUserOpenId');
+        $url="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".$redirect_uri."&response_type=code&scope=snsapi_base&state=123#wechat_redirect";
+        header('location:'.$url);
+    }
+    function getUserOpenId(){
+        $appid='wx365ea7444c5c40af';
+        $appsecret='0a24a383974a9ee95733061a4984a268';
+        $code=$_GET['code'];
+        $url="https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
+        $res=$this->http_curl($url,'get');
+        var_dump($res);
+    }
+    function getUserDetail(){
+        $appid='wx365ea7444c5c40af';
+        $redirect_uri=urlencode('http://www.jh2k15.online/wechat.php/Index/getUserInfo');
+        $url="https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".$redirect_uri."&response_type=code&scope=snsapi_userinfo&state=12345#wechat_redirect";
+        header('location:'.$url);
+    }
+    function getUserInfo(){
+        $appid='wx365ea7444c5c40af';
+        $appsecret='0a24a383974a9ee95733061a4984a268';
+        $code=$_GET['code'];
+        $url="https://api.weixin.qq.com/sns/oauth2/access_token?appid=".$appid."&secret=".$appsecret."&code=".$code."&grant_type=authorization_code";
+        $res=$this->http_curl($url,'get');
+        var_dump($res);
+        $access_token=$res['access_token'];
+        $openid=$res['openid'];
+        $url="https://api.weixin.qq.com/sns/userinfo?access_token=".$access_token."&openid=".$openid."&lang=zh_CN";
+        $res=$this->http_curl($url);
+        var_dump($res);
+    }
 }//class end
