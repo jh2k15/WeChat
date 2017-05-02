@@ -307,4 +307,44 @@ class IndexAction extends Action {
         $res=$this->http_curl($url);
         var_dump($res);
     }
+    function getJsApiTicket(){
+        if($_SESSION['jsapi_ticket_expire_time']>time() && $_SESSION['jsapi_ticket']){
+            $jsapi_ticket=$_SESSION['jsapi_ticket'];
+        }else{
+            $access_token=$this->getWxAccessToken();
+            $url="https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=".$access_token."&type=jsapi";
+            $res=$this->http_curl();
+            $jsapi_ticket=$res['ticket'];
+            $_SESSION['jsapi_ticket']=$jsapi_ticket;
+            $_SESSION['jsapi_ticket_expire_time']=time()+7000;
+        }
+        return $jsapi_ticket;
+    }
+    function getRandCode($num=16){
+        $array=array(
+            'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+            'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+            '0','1','2','3','4','5','6','7','8','9'
+            );
+        $tmpstr="";
+        $max=count($array);
+        for($i=1;$i<=$num;$i++){
+            $key=rand(0,$max-1);
+            $tmpstr.=$array[$key];
+        }
+        return $tmpstr;
+    }
+    function shareWx(){
+        $jsapi_ticket=$this->getJsApiTicket();
+        $timestamp=time();
+        $noncestr=$this->getRandCode();
+        $url="http://www.jh2k15.online/wechat.php/Index/shareWx";
+        $signature="jsapi_ticket=".$jsapi_ticket."&noncestr=".$noncestr."&timestamp=".$timestamp."&url=".$url;
+        $signature=sha1($signature);
+        $this->assign('name',"哈哈发的说法");
+        $this->assign('timestamp',$timestamp);
+        $this->assign('noncestr',$noncestr);
+        $this->assign('signature',$signature);
+        $this->display('share');
+    }
 }//class end
